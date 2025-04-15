@@ -11,6 +11,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
+#define BUF_SIZE 4096
 namespace kernel_root {
     class fork_base_info {
     public:
@@ -22,7 +23,6 @@ namespace kernel_root {
         int fd_write_child = -1;
         pid_t parent_pid = getpid();
         pid_t child_pid = 0;
-        void * transfer_data = nullptr;
         
         void reset() {
             close();
@@ -54,35 +54,35 @@ namespace kernel_root {
         }
     };
 class fork_pipe_info : public fork_base_info {};
-    static bool fork_pipe_child_process(fork_pipe_info & finfo) {
-        int fd_parent_to_child[2]; // 父进程写，子进程读
-        int fd_child_to_parent[2]; // 子进程写，父进程读
+static bool fork_pipe_child_process(fork_pipe_info & finfo) {
+    int fd_parent_to_child[2]; // 父进程写，子进程读
+    int fd_child_to_parent[2]; // 子进程写，父进程读
 
-        if (pipe(fd_parent_to_child) != 0 || pipe(fd_child_to_parent) != 0) {
-            return false;
-        }
-
-        pid_t pid = fork();
-        if (pid < 0) {
-            //fork error
-            return false;
-        }
-
-        finfo.child_pid = pid;
-        if(pid == 0) { // Child process
-            close(fd_parent_to_child[1]); // Close unused write end
-            close(fd_child_to_parent[0]); // Close unused read end
-            finfo.fd_read_parent = fd_parent_to_child[0]; // Set up child read end
-            finfo.fd_write_child = fd_child_to_parent[1]; // Set up child write end
-            return true;
-        } else { // Parent process
-            close(fd_parent_to_child[0]); // Close unused read end
-            close(fd_child_to_parent[1]); // Close unused write end
-            finfo.fd_write_parent = fd_parent_to_child[1]; // Set up parent write end
-            finfo.fd_read_child = fd_child_to_parent[0]; // Set up parent read end
-        }
+    if (pipe(fd_parent_to_child) != 0 || pipe(fd_child_to_parent) != 0) {
         return false;
     }
+
+    pid_t pid = fork();
+    if (pid < 0) {
+        //fork error
+        return false;
+    }
+
+    finfo.child_pid = pid;
+    if(pid == 0) { // Child process
+        close(fd_parent_to_child[1]); // Close unused write end
+        close(fd_child_to_parent[0]); // Close unused read end
+        finfo.fd_read_parent = fd_parent_to_child[0]; // Set up child read end
+        finfo.fd_write_child = fd_child_to_parent[1]; // Set up child write end
+        return true;
+    } else { // Parent process
+        close(fd_parent_to_child[0]); // Close unused read end
+        close(fd_child_to_parent[1]); // Close unused write end
+        finfo.fd_write_parent = fd_parent_to_child[1]; // Set up parent write end
+        finfo.fd_read_child = fd_child_to_parent[0]; // Set up parent read end
+    }
+    return false;
+}
 
 
 static bool wait_fork_child_process(const fork_base_info & finfo) {
@@ -110,38 +110,9 @@ static bool write_transfer_data_from_child(const fork_pipe_info & finfo, void* d
 	if(data_len == 0) {
 		return true;
 	}
-	size_t val = 0;
-	if(read(finfo.fd_read_parent, (void*)&val, sizeof(val))!=sizeof(val) || val != data_len ) {
+	if(write(finfo.fd_write_child, data, data_len)!=data_len) {
 		return false;
 	}
-	int mem_fd;
-	do {
-		char path[256];
-		snprintf(path, sizeof(path), "/proc/%d/mem", finfo.parent_pid);
-		mem_fd = open(path, O_RDWR);
-		if (mem_fd < 0) {
-			break;
-		}
-		if (::lseek(mem_fd, (off_t)&finfo.transfer_data, SEEK_SET) == -1) {
-			break;
-		}
-		void * p = nullptr;
-		if (read(mem_fd, &p, sizeof(p)) != sizeof(p) || p == nullptr) {
-			break;
-		}
-		if (::lseek(mem_fd, (off_t)p, SEEK_SET) == -1) {
-			break;
-		}
-		if (write(mem_fd, data, data_len) != data_len) {
-			break;
-		}
-		close(mem_fd);
-		if(write(finfo.fd_write_child, &data_len, sizeof(data_len))!=sizeof(data_len)) {
-			return false;
-		}
-		return true;
-	} while(0);
-	close(mem_fd);
 	return false;
 }
 
@@ -154,15 +125,8 @@ static bool read_transfer_data_from_child(fork_pipe_info & finfo, void* &data, s
 		return true;
 	}
 	data = malloc(data_len);
-	if(!data) {
-		return false;
-	}
-	finfo.transfer_data = data;
-	if(write(finfo.fd_write_parent, &data_len, sizeof(data_len))!=sizeof(data_len)) {
-		return false;
-	}
-	size_t val = 0;
-	if(read(finfo.fd_read_child , (void*)&val, sizeof(val))!=sizeof(val) || val != data_len) {
+	memset(data, 0, data_len);
+	if(read(finfo.fd_read_child , data, data_len)!=data_len) {
 		return false;
 	}
 	return true;
@@ -269,6 +233,7 @@ static bool write_set_string_from_child(const fork_pipe_info & finfo, const std:
     return write_transfer_data_from_child(finfo, buffer.data(), total_size);
 }
 
+
 static bool read_set_string_from_child(fork_pipe_info &finfo, std::set<std::string> &s) {
     void* data = nullptr;
     size_t data_len = 0;
@@ -350,6 +315,61 @@ static bool read_map_i_s_from_child(fork_pipe_info & finfo, std::map<int, std::s
         ptr += len;
     }
 
+    free(data);
+    return true;
+}
+
+static bool write_map_s_i_from_child(const fork_pipe_info & finfo, const std::map<std::string, int> & map) {
+    size_t total_size = 0;
+    for (const auto &pair : map) {
+        total_size += pair.first.size();
+        total_size += sizeof(size_t);
+        total_size += sizeof(int);
+    }
+
+    std::vector<char> buffer(total_size);
+    char* ptr = buffer.data();
+
+    for (const auto &pair : map) {
+        size_t len = pair.first.size();
+        memcpy(ptr, &len, sizeof(len));
+        ptr += sizeof(len);
+
+        memcpy(ptr, pair.first.data(), len);
+        ptr += len;
+
+        memcpy(ptr, &(pair.second), sizeof(pair.second));
+        ptr += sizeof(pair.second);
+    }
+    return write_transfer_data_from_child(finfo, buffer.data(), total_size);
+}
+
+static bool read_map_s_i_from_child(fork_pipe_info & finfo, std::map<std::string, int> & map) {
+    void* data = nullptr;
+    size_t data_len = 0;
+    if (!read_transfer_data_from_child(finfo, data, data_len)) {
+        return false;
+    }
+	if(!data && data_len ==  0) {
+		return true;
+	}
+
+    char* ptr = static_cast<char*>(data);
+    char* end = ptr + data_len;
+
+    while (ptr < end) {
+        size_t len;
+        memcpy(&len, ptr, sizeof(len));
+        ptr += sizeof(len);
+
+        std::string key(ptr, len);
+        ptr += len;
+        
+        int value;
+        memcpy(&value, ptr, sizeof(value));
+        map[key] = value;
+        ptr += sizeof(value);
+    }
     free(data);
     return true;
 }
