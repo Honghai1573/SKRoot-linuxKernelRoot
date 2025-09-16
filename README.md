@@ -1,44 +1,53 @@
-# SKRoot - SuperKernelRoot - Linux内核级完美隐藏ROOT演示
-新一代SKRoot，挑战全网root检测手段，跟面具完全不同思路，摆脱面具被检测的弱点，完美隐藏root功能，全程不需要暂停SELinux，实现真正的SELinux  0%触碰，通用性强，通杀所有内核，不需要内核源码，直接patch内核，兼容安卓APP直接JNI调用，稳定、流畅、不闪退。
+# SKRoot - LinuxKernelRoot - Linux内核级完美隐藏ROOT演示
+新一代SKRoot，挑战全网root检测手段，跟面具完全不同思路，摆脱面具被检测的弱点，完美隐藏root功能，实现真正的SELinux 0%触碰，通用性强，通杀所有内核，不需要内核源码，直接patch内核，兼容安卓APP直接JNI调用，稳定、流畅、不闪退。
 ## 功能列表：
 #### 1.测试ROOT权限
 #### 2.执行ROOT命令
-#### 3.执行原生内核命令
+#### 3.以ROOT执行程序
 #### 4.安装部署su
 #### 5.注入su到指定进程
 #### 6.完全卸载清理su
 #### 7.寄生目标APP
 
 ## 效果：
-* **实验设备包括：红米K20\K30\K40\K50\K60、小米8\9\10\11\12\13、小米平板5\6、红魔5\6\7、联想、三星、一加、ROG2\3等，支持型号非常多。测试结果显示，SKRoot能够在所支持设备上非常稳定的运行。**
+* 实验设备包括：红米K20\K30\K40\K50\K60、小米8\9\10\11\12\13、小米平板5\6、红魔5\6\7、联想、三星、一加、ROG2\3等，支持型号非常多。测试结果显示，SKRoot能够在设备上**非常稳定**的运行。
 * **过市面上所有主流APP的ROOT检测，如农业XX、交X12XX3等...**
-* **无需理会谷歌GKI**
-* **让所有的ROOT检测手段都回归尘土吧，愿世界迎来一个美好的ROOT时代！**
+* **不需要Linux内核源码**
+* **支持Linux内核版本：3.10~6.6**
 
-![image](https://github.com/abcz316/linuxKernelRoot/blob/master/ScreenCap/1.png)
-![image](https://github.com/abcz316/linuxKernelRoot/blob/master/ScreenCap/3.png)
-![image](https://github.com/abcz316/linuxKernelRoot/blob/master/ScreenCap/4.png)
+![image](https://github.com/abcz316/linuxKernelRoot/blob/master/Lite_version/ScreenCap/1.png)
+![image](https://github.com/abcz316/linuxKernelRoot/blob/master/Lite_version/ScreenCap/3.png)
+![image](https://github.com/abcz316/linuxKernelRoot/blob/master/Lite_version/ScreenCap/4.png)
 
 ## 功能备注：
-1.APP应用程序拿到ROOT权限的唯一方法就是得到ROOT密匙，此密匙为48位的随机字符串，安全可靠。
+1. APP应用程序得到ROOT权限的唯一方法就是得到ROOT密匙，此密匙为48位的随机字符串，安全可靠。
 
-2.其中【**注入su到指定进程**】**只支持授权su到64位的APP**，老式32位APP不再进行支持，因市面上几乎所有APP都是64位，例如MT文件管理器、Root Explorer文件管理器等等。
+2. 其中【**注入su到指定进程**】**只支持授权su到64位的APP**，老式32位APP不再进行支持，因市面上几乎所有APP都是64位，例如MT文件管理器、Root Explorer文件管理器等等。
 
 ## 使用流程：
-1.将内核文件拖拽置`patch_kernel_root.exe`即可一键自动化流程补丁内核，同时会自动生成ROOT密匙。
+1.编译产物下载： [patch_kernel_root.exe](https://github.com/abcz316/SKRoot-linuxKernelRoot/blob/master/Lite_version/patch_kernel_root/exe/patch_kernel_root.exe)、 [PermissionManager.apk](https://github.com/abcz316/SKRoot-linuxKernelRoot/blob/master/Lite_version/PermissionManager/build_apk/PermissionManager.apk)
 
-2.编译并启动`PermissionManager`或者`testRoot`，输入ROOT密匙值，开始享受舒爽的ROOT环境。
+2.将内核kernel文件拖拽置`patch_kernel_root.exe`即可一键自动化流程补丁内核，同时会自动生成ROOT密匙。
+
+3.安装并启动`PermissionManager.apk`或者`testRoot`，输入ROOT密匙值，开始享受舒爽的ROOT环境。
 
 ## 更新日志：
-**2025-4：**
-  * **1.修复Linux 6.10无法开机问题**
-  * **2.修复一些bug**
-  
-**2024-9：**
-  * **1.新增永久授权su功能**
-  * **2.修复一些bug**
 
-**2023-8：**
+2025-8：
+  * **1.修复Linux 4.x会死机的问题**
+
+2025-5：
+  * **1.修复Linux 6.1、6.6及以上无法解析问题**
+  * **2.新增内核隐藏su路径（抵御安卓漏洞）**
+  * **3.修复su进程不能退出有残留的问题**
+  * **4.新增以ROOT身份直接执行程序功能**
+  * **5.新增内核防冻结进程功能**
+
+  
+2024-9：
+  * **1.新增永久授权su功能**
+
+2023-8：
   * **1.新增seccomp补丁代码**
   * **2.新增寄生目标功能**
   * **3.新增一键自动化流程补丁内核功能**
@@ -46,12 +55,19 @@
   * **5.修复Linux 5.10、5.15无法开机问题**
 
 ## 问题排查：
-如发现第三方应用程序依然有侦测行为，请按照以下步骤进行排查：
+1、如遇到Linux 6.0以上内核无法开机，请阅读：
+* **请不要使用Android.Image.Kitchen进行打包，该工具不支持Linux 6.0以上内核！**
+* **可使用magiskboot进行打包。**
+* **magiskboot的快速获取方式：使用7z解压[Magisk.apk](https://github.com/topjohnwu/Magisk/releases)，把lib/x86_64文件夹里的libmagiskboot.so直接改名magiskboot即可使用。因为这是个Linux可执行文件，并不是动态库，不要被名字带so字样所迷惑。**
+* **magiskboot官方没有提供Windows版本，请安装Linux系统使用它。不建议使用非官方的Windows版本，因为代码版本可能太旧。**
+* **解包命令：./magiskboot unpack boot.img**
+* **打包命令：./magiskboot repack boot.img**
+
+2、如发现第三方应用程序依然有侦测行为，请按照以下步骤进行排查：
 * **内核必须保证是基于官方原版进行修改，而非自行编译或使用第三方源码编译。**
 * **如果你曾经使用过Magisk，你应该先将手机完全刷机，因为Magisk可能会残留日志文件等信息。**
-* **不要安装需要ROOT权限的工具，或涉及系统环境检测的应用，如冰箱、黑洞、momo和密匙认证等。这些应用的存在可能会被用作证据，推断你的设备已获取ROOT权限。以冰箱为例，这款应用需要ROOT权限才能运行，如果你的设备上安装了冰箱，那就可能被用来佐证你的设备处于ROOT环境。实际测试中我们发现，"X租号"APP就会进行此类环境检测。因此，我们强烈建议不安装这些工具。若确需使用，请在使用结束后立即卸载，以降低异常环境判断风险。**
-* **Android APP应用可能会被检测其特征。这里我们仅提供APP调用的教学，在实际使用中，请尽量隐藏应用。可以考虑使用寄生功能，即将你的应用功能嵌入或附加到另一个无害或常见的应用内，这样可以有效地避免检测。如果这仍然不能满足隐藏的需求，你还可以考虑卸载应用，改用纯命令行方式调用的testRoot.cpp。**
-* **在老旧版本的Android系统中，应用程序无需任何权限即可访问/data/local/tmp目录。在这种情况下，你应该升级Android系统版本，或者卸载SU。**
-* **如果你的手机在解锁后会发出警报，你需要自行解决这个问题，因为它与SKRoot无关。**
-* **检查应用程序是否在检测Bootloader锁，而不是ROOT权限。如果是这样，你应该安装SKRoot的隐藏Bootloader锁模块。**
+* **不要安装需要ROOT权限的工具，或涉及系统环境检测的应用，如冰箱、黑洞、momo和密匙认证等。这些应用的存在可能会被用作证据，推断你的设备已获取ROOT权限。若需使用，请在使用后立即卸载。**
+* **Android APP可能会被特征检测。这里的APP只是演示功能写法。在实际使用中，请尽量隐藏APP。例如使用寄生功能，寄生到其他无害的APP内，以免被侦测。**
+* **如果在解锁BL后手机会发出警报，你需要自行解决这个问题，因为它与SKRoot无关。**
+* **如果对方是检测BL锁，而不是ROOT权限。你应该安装SKRoot的隐藏BL锁模块。**
 * **请检查SELinux状态是否被恶意软件禁用。**
